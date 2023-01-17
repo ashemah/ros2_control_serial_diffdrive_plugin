@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(diffdrive_arduino)
+project(ros2_control_serial_diffdrive_plugin)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
@@ -23,15 +23,15 @@ find_package(pluginlib REQUIRED)
 
 
 
-add_library(diffdrive_arduino SHARED src/diffdrive_arduino.cpp src/wheel.cpp src/arduino_comms.cpp)
+add_library(ros2_control_serial_diffdrive_plugin SHARED src/ros2_control_serial_diffdrive_plugin.cpp src/wheel.cpp src/serial_comms.cpp)
 
 target_include_directories(
-  diffdrive_arduino
+  ros2_control_serial_diffdrive_plugin
   PRIVATE
   include
 )
 ament_target_dependencies(
-  diffdrive_arduino
+  ros2_control_serial_diffdrive_plugin
   hardware_interface
   controller_manager
   serial
@@ -65,7 +65,7 @@ pluginlib_export_plugin_description_file(hardware_interface fake_robot_hardware.
 
 
 install(
-  TARGETS diffdrive_arduino fake_robot
+  TARGETS ros2_control_serial_diffdrive_plugin fake_robot
   DESTINATION lib
 )
 
@@ -79,7 +79,7 @@ install(
 
 
 ament_export_libraries(
-  diffdrive_arduino
+  ros2_control_serial_diffdrive_plugin
   fake_robot
 )
 ament_export_dependencies(
