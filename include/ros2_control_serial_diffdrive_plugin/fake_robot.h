@@ -1,6 +1,5 @@
-#ifndef DIFFDRIVE_ARDUINO_FAKE_ROBOT_H
-#define DIFFDRIVE_ARDUINO_FAKE_ROBOT_H
-
+#ifndef DIFFDRIVE_SERIAL_FAKE_ROBOT_H
+#define DIFFDRIVE_SERIAL_FAKE_ROBOT_H
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -19,11 +18,10 @@ using hardware_interface::return_type;
 class FakeRobot : public hardware_interface::BaseInterface<hardware_interface::SystemInterface>
 {
 
-
 public:
   FakeRobot();
 
-  return_type configure(const hardware_interface::HardwareInfo & info) override;
+  return_type configure(const hardware_interface::HardwareInfo &info) override;
 
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
@@ -37,10 +35,7 @@ public:
 
   return_type write() override;
 
-
-
 private:
-
   Config cfg_;
 
   Wheel l_wheel_;
@@ -49,8 +44,6 @@ private:
   rclcpp::Logger logger_;
 
   std::chrono::time_point<std::chrono::system_clock> time_;
-  
 };
 
-
-#endif // DIFFDRIVE_ARDUINO_FAKE_ROBOT_H
+#endif // DIFFDRIVE_SERIAL_FAKE_ROBOT_H
