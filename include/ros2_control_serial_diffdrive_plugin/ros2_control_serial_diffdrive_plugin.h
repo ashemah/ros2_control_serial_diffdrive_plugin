@@ -49,4 +49,4 @@ private:
   std::chrono::time_point<std::chrono::system_clock> time_;
 };
 
-#endif // DIFFDRIVE_ARDUINO_REAL_ROBOT_H
+#endif

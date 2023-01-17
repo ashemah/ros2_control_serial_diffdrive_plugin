@@ -1,8 +1,7 @@
-#ifndef DIFFDRIVE_ARDUINO_CONFIG_H
-#define DIFFDRIVE_ARDUINO_CONFIG_H
+#ifndef DIFFDRIVE_SERIAL_CONFIG_H
+#define DIFFDRIVE_SERIAL_CONFIG_H
 
 #include <string>
-
 
 struct Config
 {
@@ -15,5 +14,4 @@ struct Config
   int enc_counts_per_rev = 1920;
 };
 
-
-#endif // DIFFDRIVE_ARDUINO_CONFIG_H
+#endif // DIFFDRIVE_SERIAL_CONFIG_H

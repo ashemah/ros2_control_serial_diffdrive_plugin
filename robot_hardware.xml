@@ -1,9 +1,9 @@
-<library path="diffdrive_arduino">
-  <class name="diffdrive_arduino/DiffDriveArduino"
-         type="DiffDriveArduino"
+<library path="ros2_control_serial_diffdrive_plugin">
+  <class name="ros2_control_serial_diffdrive_plugin/DiffDriveSerial"
+         type="DiffDriveSerial"
          base_class_type="hardware_interface::SystemInterface">
     <description>
-      Hardware Interface for Differential Drive Arduino controller.
+      Hardware Interface for Differential Drive Serial controller.
     </description>
   </class>
 </library>

@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <controller_manager/controller_manager.h>
-#include "diffdrive_arduino/diffdrive_arduino.h"
+#include "ros2_control_serial_diffdrive_plugin/ros2_control_serial_diffdrive_plugin.h"
 
 int main(int argc, char **argv)
 {
@@ -16,7 +16,6 @@ int main(int argc, char **argv)
   n.getParam("device", robot_cfg.device);
   n.getParam("enc_counts_per_rev", robot_cfg.enc_counts_per_rev);
   n.getParam("robot_loop_rate", robot_cfg.loop_rate);
-  
 
   DiffDriveSerial robot(robot_cfg);
   controller_manager::ControllerManager cm(&robot);

@@ -1,14 +1,11 @@
-#ifndef DIFFDRIVE_ARDUINO_WHEEL_H
-#define DIFFDRIVE_ARDUINO_WHEEL_H
+#ifndef DIFFDRIVE_SERIAL_WHEEL_H
+#define DIFFDRIVE_SERIAL_WHEEL_H
 
 #include <string>
 
-
-
 class Wheel
 {
-    public:
-
+public:
     std::string name = "";
     int enc = 0;
     double cmd = 0;
@@ -21,14 +18,10 @@ class Wheel
     Wheel() = default;
 
     Wheel(const std::string &wheel_name, int counts_per_rev);
-    
+
     void setup(const std::string &wheel_name, int counts_per_rev);
 
     double calcEncAngle();
-
-
-
 };
 
-
-#endif // DIFFDRIVE_ARDUINO_WHEEL_H
+#endif // DIFFDRIVE_SERIAL_WHEEL_H

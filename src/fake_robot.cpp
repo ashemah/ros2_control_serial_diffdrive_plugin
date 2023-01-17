@@ -1,18 +1,16 @@
-#include "diffdrive_arduino/fake_robot.h"
-
+#include "ros2_control_serial_diffdrive_plugin/fake_robot.h"
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
-
 FakeRobot::FakeRobot()
-  : logger_(rclcpp::get_logger("FakeRobot"))
-{}
-
-
-
-return_type FakeRobot::configure(const hardware_interface::HardwareInfo & info)
+    : logger_(rclcpp::get_logger("FakeRobot"))
 {
-  if (configure_default(info) != return_type::OK) {
+}
+
+return_type FakeRobot::configure(const hardware_interface::HardwareInfo &info)
+{
+  if (configure_default(info) != return_type::OK)
+  {
     return return_type::ERROR;
   }
 
@@ -22,7 +20,6 @@ return_type FakeRobot::configure(const hardware_interface::HardwareInfo & info)
 
   cfg_.left_wheel_name = info_.hardware_parameters["left_wheel_name"];
   cfg_.right_wheel_name = info_.hardware_parameters["right_wheel_name"];
-
 
   // Set up the wheels
   // Note: It doesn't matter that we haven't set encoder counts per rev
@@ -63,7 +60,6 @@ std::vector<hardware_interface::CommandInterface> FakeRobot::export_command_inte
   return command_interfaces;
 }
 
-
 return_type FakeRobot::start()
 {
   RCLCPP_INFO(logger_, "Starting Controller...");
@@ -91,14 +87,11 @@ hardware_interface::return_type FakeRobot::read()
   double deltaSeconds = diff.count();
   time_ = new_time;
 
-
   // Force the wheel position
   l_wheel_.pos = l_wheel_.pos + l_wheel_.vel * deltaSeconds;
   r_wheel_.pos = r_wheel_.pos + r_wheel_.vel * deltaSeconds;
 
   return return_type::OK;
-
-  
 }
 
 hardware_interface::return_type FakeRobot::write()
@@ -109,15 +102,11 @@ hardware_interface::return_type FakeRobot::write()
   l_wheel_.vel = l_wheel_.cmd;
   r_wheel_.vel = r_wheel_.cmd;
 
-
-  return return_type::OK;  
+  return return_type::OK;
 }
-
-
 
 #include "pluginlib/class_list_macros.hpp"
 
 PLUGINLIB_EXPORT_CLASS(
-  FakeRobot,
-  hardware_interface::SystemInterface
-)
+    FakeRobot,
+    hardware_interface::SystemInterface)

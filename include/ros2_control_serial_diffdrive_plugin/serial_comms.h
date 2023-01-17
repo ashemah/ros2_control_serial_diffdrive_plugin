@@ -1,5 +1,5 @@
-#ifndef DIFFDRIVE_ARDUINO_ARDUINO_COMMS_H
-#define DIFFDRIVE_ARDUINO_ARDUINO_COMMS_H
+#ifndef DIFFDRIVE_SERIAL_ARDUINO_COMMS_H
+#define DIFFDRIVE_SERIAL_ARDUINO_COMMS_H
 
 #include <serial/serial.h>
 #include <cstring>
@@ -31,4 +31,4 @@ private:
   serial::Serial serial_conn_; ///< Underlying serial connection
 };
 
-#endif // DIFFDRIVE_ARDUINO_ARDUINO_COMMS_H
+#endif // DIFFDRIVE_SERIAL_ARDUINO_COMMS_H
