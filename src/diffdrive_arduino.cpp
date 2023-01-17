@@ -1,22 +1,16 @@
 #include "diffdrive_arduino/diffdrive_arduino.h"
 
-
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
-
-
-
 
 DiffDriveArduino::DiffDriveArduino()
     : logger_(rclcpp::get_logger("DiffDriveArduino"))
-{}
-
-
-
-
-
-return_type DiffDriveArduino::configure(const hardware_interface::HardwareInfo & info)
 {
-  if (configure_default(info) != return_type::OK) {
+}
+
+return_type DiffDriveArduino::configure(const hardware_interface::HardwareInfo &info)
+{
+  if (configure_default(info) != return_type::OK)
+  {
     return return_type::ERROR;
   }
 
@@ -37,7 +31,7 @@ return_type DiffDriveArduino::configure(const hardware_interface::HardwareInfo &
   r_wheel_.setup(cfg_.right_wheel_name, cfg_.enc_counts_per_rev);
 
   // Set up the Arduino
-  arduino_.setup(cfg_.device, cfg_.baud_rate, cfg_.timeout);  
+  arduino_.setup(cfg_.device, cfg_.baud_rate, cfg_.timeout);
 
   RCLCPP_INFO(logger_, "Finished Configuration");
 
@@ -71,12 +65,12 @@ std::vector<hardware_interface::CommandInterface> DiffDriveArduino::export_comma
   return command_interfaces;
 }
 
-
 return_type DiffDriveArduino::start()
 {
   RCLCPP_INFO(logger_, "Starting Controller...");
 
-  arduino_.sendEmptyMsg();
+  arduino_.sendActivateMsg();
+
   // arduino.setPidValues(9,7,0,100);
   // arduino.setPidValues(14,7,0,100);
   arduino_.setPidValues(30, 20, 0, 100);
@@ -105,7 +99,6 @@ hardware_interface::return_type DiffDriveArduino::read()
   double deltaSeconds = diff.count();
   time_ = new_time;
 
-
   if (!arduino_.connected())
   {
     return return_type::ERROR;
@@ -121,11 +114,7 @@ hardware_interface::return_type DiffDriveArduino::read()
   r_wheel_.pos = r_wheel_.calcEncAngle();
   r_wheel_.vel = (r_wheel_.pos - pos_prev) / deltaSeconds;
 
-
-
   return return_type::OK;
-
-  
 }
 
 hardware_interface::return_type DiffDriveArduino::write()
@@ -138,20 +127,11 @@ hardware_interface::return_type DiffDriveArduino::write()
 
   arduino_.setMotorValues(l_wheel_.cmd / l_wheel_.rads_per_count / cfg_.loop_rate, r_wheel_.cmd / r_wheel_.rads_per_count / cfg_.loop_rate);
 
-
-
-
   return return_type::OK;
-
-
-  
 }
-
-
 
 #include "pluginlib/class_list_macros.hpp"
 
 PLUGINLIB_EXPORT_CLASS(
-  DiffDriveArduino,
-  hardware_interface::SystemInterface
-)
+    DiffDriveArduino,
+    hardware_interface::SystemInterface)

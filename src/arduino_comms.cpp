@@ -4,22 +4,19 @@
 #include <sstream>
 #include <cstdlib>
 
-
 void ArduinoComms::setup(const std::string &serial_device, int32_t baud_rate, int32_t timeout_ms)
-{  
+{
     serial_conn_.setPort(serial_device);
     serial_conn_.setBaudrate(baud_rate);
     serial::Timeout tt = serial::Timeout::simpleTimeout(timeout_ms);
     serial_conn_.setTimeout(tt); // This should be inline except setTimeout takes a reference and so needs a variable
     serial_conn_.open();
     // serial_conn_.(serial_device, baud_rate, serial::Timeout::simpleTimeout(timeout_ms));
-
 }
 
-
-void ArduinoComms::sendEmptyMsg()
+void ArduinoComms::sendActivateMsg()
 {
-    std::string response = sendMsg("\r");
+    std::string response = sendMsg("a\r");
 }
 
 void ArduinoComms::readEncoderValues(int &val_1, int &val_2)
