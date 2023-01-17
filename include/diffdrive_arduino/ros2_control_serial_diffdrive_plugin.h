@@ -1,5 +1,5 @@
-#ifndef DIFFDRIVE_ARDUINO_REAL_ROBOT_H
-#define DIFFDRIVE_ARDUINO_REAL_ROBOT_H
+#ifndef DIFFDRIVE_SERIAL_PLUGIN_H
+#define DIFFDRIVE_SERIAL_PLUGIN_H
 
 #include <cstring>
 #include "rclcpp/rclcpp.hpp"
@@ -13,19 +13,17 @@
 
 #include "config.h"
 #include "wheel.h"
-#include "arduino_comms.h"
-
+#include "serial_comms.h"
 
 using hardware_interface::return_type;
 
-class DiffDriveArduino : public hardware_interface::BaseInterface<hardware_interface::SystemInterface>
+class DiffDriveSerial : public hardware_interface::BaseInterface<hardware_interface::SystemInterface>
 {
 
-
 public:
-  DiffDriveArduino();
+  DiffDriveSerial();
 
-  return_type configure(const hardware_interface::HardwareInfo & info) override;
+  return_type configure(const hardware_interface::HardwareInfo &info) override;
 
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
@@ -39,12 +37,9 @@ public:
 
   return_type write() override;
 
-
-
 private:
-
   Config cfg_;
-  ArduinoComms arduino_;
+  SerialComms serial_;
 
   Wheel l_wheel_;
   Wheel r_wheel_;
@@ -52,8 +47,6 @@ private:
   rclcpp::Logger logger_;
 
   std::chrono::time_point<std::chrono::system_clock> time_;
-  
 };
-
 
 #endif // DIFFDRIVE_ARDUINO_REAL_ROBOT_H

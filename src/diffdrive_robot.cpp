@@ -7,7 +7,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "diffdrive_robot");
   ros::NodeHandle n("~");
 
-  DiffDriveArduino::Config robot_cfg;
+  DiffDriveSerial::Config robot_cfg;
 
   // Attempt to retrieve parameters. If they don't exist, the default values from the struct will be used
   n.getParam("left_wheel_name", robot_cfg.left_wheel_name);
@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   n.getParam("robot_loop_rate", robot_cfg.loop_rate);
   
 
-  DiffDriveArduino robot(robot_cfg);
+  DiffDriveSerial robot(robot_cfg);
   controller_manager::ControllerManager cm(&robot);
 
   ros::AsyncSpinner spinner(1);

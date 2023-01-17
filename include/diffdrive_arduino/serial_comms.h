@@ -4,15 +4,15 @@
 #include <serial/serial.h>
 #include <cstring>
 
-class ArduinoComms
+class SerialComms
 {
 
 public:
-  ArduinoComms()
+  SerialComms()
   {
   }
 
-  ArduinoComms(const std::string &serial_device, int32_t baud_rate, int32_t timeout_ms)
+  SerialComms(const std::string &serial_device, int32_t baud_rate, int32_t timeout_ms)
       : serial_conn_(serial_device, baud_rate, serial::Timeout::simpleTimeout(timeout_ms))
   {
   }

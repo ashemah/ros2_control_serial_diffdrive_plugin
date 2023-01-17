@@ -1,13 +1,13 @@
-#include "diffdrive_arduino/diffdrive_arduino.h"
+#include "ros2_control_serial_diffdrive_plugin/ros2_control_serial_diffdrive_plugin.h"
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
-DiffDriveArduino::DiffDriveArduino()
-    : logger_(rclcpp::get_logger("DiffDriveArduino"))
+DiffDriveSerial::DiffDriveSerial()
+    : logger_(rclcpp::get_logger("DiffDriveSerial"))
 {
 }
 
-return_type DiffDriveArduino::configure(const hardware_interface::HardwareInfo &info)
+return_type DiffDriveSerial::configure(const hardware_interface::HardwareInfo &info)
 {
   if (configure_default(info) != return_type::OK)
   {
@@ -31,7 +31,7 @@ return_type DiffDriveArduino::configure(const hardware_interface::HardwareInfo &
   r_wheel_.setup(cfg_.right_wheel_name, cfg_.enc_counts_per_rev);
 
   // Set up the Arduino
-  arduino_.setup(cfg_.device, cfg_.baud_rate, cfg_.timeout);
+  serial_.setup(cfg_.device, cfg_.baud_rate, cfg_.timeout);
 
   RCLCPP_INFO(logger_, "Finished Configuration");
 
@@ -39,7 +39,7 @@ return_type DiffDriveArduino::configure(const hardware_interface::HardwareInfo &
   return return_type::OK;
 }
 
-std::vector<hardware_interface::StateInterface> DiffDriveArduino::export_state_interfaces()
+std::vector<hardware_interface::StateInterface> DiffDriveSerial::export_state_interfaces()
 {
   // We need to set up a position and a velocity interface for each wheel
 
@@ -53,7 +53,7 @@ std::vector<hardware_interface::StateInterface> DiffDriveArduino::export_state_i
   return state_interfaces;
 }
 
-std::vector<hardware_interface::CommandInterface> DiffDriveArduino::export_command_interfaces()
+std::vector<hardware_interface::CommandInterface> DiffDriveSerial::export_command_interfaces()
 {
   // We need to set up a velocity command interface for each wheel
 
@@ -65,22 +65,22 @@ std::vector<hardware_interface::CommandInterface> DiffDriveArduino::export_comma
   return command_interfaces;
 }
 
-return_type DiffDriveArduino::start()
+return_type DiffDriveSerial::start()
 {
   RCLCPP_INFO(logger_, "Starting Controller...");
 
-  arduino_.sendActivateMsg();
+  serial_.sendActivateMsg();
 
   // arduino.setPidValues(9,7,0,100);
   // arduino.setPidValues(14,7,0,100);
-  arduino_.setPidValues(30, 20, 0, 100);
+  serial_.setPidValues(30, 20, 0, 100);
 
   status_ = hardware_interface::status::STARTED;
 
   return return_type::OK;
 }
 
-return_type DiffDriveArduino::stop()
+return_type DiffDriveSerial::stop()
 {
   RCLCPP_INFO(logger_, "Stopping Controller...");
   status_ = hardware_interface::status::STOPPED;
@@ -88,7 +88,7 @@ return_type DiffDriveArduino::stop()
   return return_type::OK;
 }
 
-hardware_interface::return_type DiffDriveArduino::read()
+hardware_interface::return_type DiffDriveSerial::read()
 {
 
   // TODO fix chrono duration
@@ -99,12 +99,12 @@ hardware_interface::return_type DiffDriveArduino::read()
   double deltaSeconds = diff.count();
   time_ = new_time;
 
-  if (!arduino_.connected())
+  if (!serial_.connected())
   {
     return return_type::ERROR;
   }
 
-  arduino_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
+  serial_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
 
   double pos_prev = l_wheel_.pos;
   l_wheel_.pos = l_wheel_.calcEncAngle();
@@ -117,15 +117,15 @@ hardware_interface::return_type DiffDriveArduino::read()
   return return_type::OK;
 }
 
-hardware_interface::return_type DiffDriveArduino::write()
+hardware_interface::return_type DiffDriveSerial::write()
 {
 
-  if (!arduino_.connected())
+  if (!serial_.connected())
   {
     return return_type::ERROR;
   }
 
-  arduino_.setMotorValues(l_wheel_.cmd / l_wheel_.rads_per_count / cfg_.loop_rate, r_wheel_.cmd / r_wheel_.rads_per_count / cfg_.loop_rate);
+  serial_.setMotorValues(l_wheel_.cmd / l_wheel_.rads_per_count / cfg_.loop_rate, r_wheel_.cmd / r_wheel_.rads_per_count / cfg_.loop_rate);
 
   return return_type::OK;
 }
@@ -133,5 +133,5 @@ hardware_interface::return_type DiffDriveArduino::write()
 #include "pluginlib/class_list_macros.hpp"
 
 PLUGINLIB_EXPORT_CLASS(
-    DiffDriveArduino,
+    DiffDriveSerial,
     hardware_interface::SystemInterface)
