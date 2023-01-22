@@ -125,7 +125,7 @@ hardware_interface::return_type DiffDriveSerial::write()
     return return_type::ERROR;
   }
 
-  RCLCPP_INFO(logger_, "M %f %f", l_wheel_.cmd / l_wheel_.rads_per_count, r_wheel_.cmd / r_wheel_.rads_per_count);
+  RCLCPP_INFO(logger_, "M %f %f", l_wheel_.cmd, l_wheel_.rads_per_count);
 
   serial_.setMotorValues(l_wheel_.cmd / l_wheel_.rads_per_count / cfg_.loop_rate, r_wheel_.cmd / r_wheel_.rads_per_count / cfg_.loop_rate);
 
