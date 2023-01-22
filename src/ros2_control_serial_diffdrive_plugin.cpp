@@ -17,6 +17,7 @@ return_type DiffDriveSerial::configure(const hardware_interface::HardwareInfo &i
   RCLCPP_INFO(logger_, "Configuring...");
 
   time_ = std::chrono::system_clock::now();
+  lastMoveTime_ = std::chrono::system_clock::now();
 
   cfg_.left_wheel_name = info_.hardware_parameters["left_wheel_name"];
   cfg_.right_wheel_name = info_.hardware_parameters["right_wheel_name"];
@@ -69,10 +70,9 @@ return_type DiffDriveSerial::start()
 {
   RCLCPP_INFO(logger_, "Starting Controller...");
 
-  serial_.sendActivateMsg();
+  serial_.activateMotors();
+  motorIsActive_ = true;
 
-  // arduino.setPidValues(9,7,0,100);
-  // arduino.setPidValues(14,7,0,100);
   serial_.setPidValues(30, 20, 0, 100);
 
   status_ = hardware_interface::status::STARTED;
@@ -126,6 +126,34 @@ hardware_interface::return_type DiffDriveSerial::write()
   }
 
   // RCLCPP_INFO(logger_, "M %f %f %f", l_wheel_.cmd, l_wheel_.ticks_per_radian, l_wheel_.cmd * l_wheel_.ticks_per_radian);
+  bool isMoving = l_wheel_.cmd != 0 || r_wheel_.cmd != 0;
+
+  // Calculate if we should deactivate the motors
+  if (isMoving)
+  {
+    if (!motorIsActive_)
+    {
+      serial_.activateMotors();
+      motorIsActive_ = true;
+    }
+
+    auto nowTime = std::chrono::system_clock::now();
+    lastMoveTime_ = nowTime;
+  }
+  else
+  {
+    auto nowTime = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff = nowTime - lastMoveTime_;
+    double deltaSeconds = diff.count();
+
+    if (deltaSeconds > 5 && motorIsActive_)
+    {
+      serial_.deactivateMotors();
+      motorIsActive_ = false;
+    }
+
+    lastMoveTime_ = nowTime;
+  }
 
   serial_.setMotorValues(l_wheel_.cmd * l_wheel_.ticks_per_radian, r_wheel_.cmd * r_wheel_.ticks_per_radian);
 

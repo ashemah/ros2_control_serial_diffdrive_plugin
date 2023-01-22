@@ -47,6 +47,8 @@ private:
   rclcpp::Logger logger_;
 
   std::chrono::time_point<std::chrono::system_clock> time_;
+  std::chrono::time_point<std::chrono::system_clock> lastMoveTime_;
+  bool motorsAreActive_ = false;
 };
 
 #endif

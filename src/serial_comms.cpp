@@ -13,9 +13,14 @@ void SerialComms::setup(const std::string &serial_device, int32_t baud_rate, int
     serial_conn_.open();
 }
 
-void SerialComms::sendActivateMsg()
+void SerialComms::activateMotors()
 {
     std::string response = sendMsg("a\r");
+}
+
+void SerialComms::deactivateMotors()
+{
+    std::string response = sendMsg("d\r");
 }
 
 void SerialComms::readEncoderValues(int &val_1, int &val_2)
