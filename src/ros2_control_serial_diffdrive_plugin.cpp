@@ -71,7 +71,7 @@ return_type DiffDriveSerial::start()
   RCLCPP_INFO(logger_, "Starting Controller...");
 
   serial_.activateMotors();
-  motorIsActive_ = true;
+  motorsAreActive_ = true;
 
   serial_.setPidValues(30, 20, 0, 100);
 
@@ -131,10 +131,10 @@ hardware_interface::return_type DiffDriveSerial::write()
   // Calculate if we should deactivate the motors
   if (isMoving)
   {
-    if (!motorIsActive_)
+    if (!motorsAreActive_)
     {
       serial_.activateMotors();
-      motorIsActive_ = true;
+      motorsAreActive_ = true;
     }
 
     auto nowTime = std::chrono::system_clock::now();
@@ -146,10 +146,10 @@ hardware_interface::return_type DiffDriveSerial::write()
     std::chrono::duration<double> diff = nowTime - lastMoveTime_;
     double deltaSeconds = diff.count();
 
-    if (deltaSeconds > 5 && motorIsActive_)
+    if (deltaSeconds > 5 && motorsAreActive_)
     {
       serial_.deactivateMotors();
-      motorIsActive_ = false;
+      motorsAreActive_ = false;
     }
 
     lastMoveTime_ = nowTime;
