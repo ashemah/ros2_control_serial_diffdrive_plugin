@@ -125,7 +125,7 @@ hardware_interface::return_type DiffDriveSerial::write()
     return return_type::ERROR;
   }
 
-  // RCLCPP_INFO(logger_, "M %f %f %f", l_wheel_.cmd, l_wheel_.ticks_per_radian, l_wheel_.cmd * l_wheel_.ticks_per_radian);
+  RCLCPP_INFO(logger_, "M %f %f", l_wheel_.cmd, r_wheel_.cmd);
   bool isMoving = l_wheel_.cmd != 0 || r_wheel_.cmd != 0;
 
   // Calculate if we should deactivate the motors
