@@ -107,11 +107,11 @@ hardware_interface::return_type DiffDriveSerial::read()
   serial_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
 
   double pos_prev = l_wheel_.pos;
-  l_wheel_.pos = l_wheel_.calcEncAngle();
+  l_wheel_.pos = l_wheel_.calcEncRadians();
   l_wheel_.vel = (l_wheel_.pos - pos_prev) / deltaSeconds;
 
   pos_prev = r_wheel_.pos;
-  r_wheel_.pos = r_wheel_.calcEncAngle();
+  r_wheel_.pos = r_wheel_.calcEncRadians();
   r_wheel_.vel = (r_wheel_.pos - pos_prev) / deltaSeconds;
 
   return return_type::OK;
@@ -125,7 +125,7 @@ hardware_interface::return_type DiffDriveSerial::write()
     return return_type::ERROR;
   }
 
-  RCLCPP_INFO(logger_, "M %f %f", l_wheel_.cmd, l_wheel_.rads_per_count);
+  RCLCPP_INFO(logger_, "M %f %f %f", l_wheel_.cmd, l_wheel_.ticks_per_radian, l_wheel_.cmd * l_wheel_.ticks_per_radian);
 
   serial_.setMotorValues(l_wheel_.cmd / l_wheel_.rads_per_count / cfg_.loop_rate, r_wheel_.cmd / r_wheel_.rads_per_count / cfg_.loop_rate);
 

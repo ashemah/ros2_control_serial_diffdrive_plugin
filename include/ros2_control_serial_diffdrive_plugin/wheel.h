@@ -13,15 +13,15 @@ public:
     double vel = 0;
     double eff = 0;
     double velSetPt = 0;
-    double rads_per_count = 0;
+    double ticks_per_radian = 0;
 
     Wheel() = default;
 
-    Wheel(const std::string &wheel_name, int counts_per_rev);
+    Wheel(const std::string &wheel_name, int ticks_per_rev);
 
-    void setup(const std::string &wheel_name, int counts_per_rev);
+    void setup(const std::string &wheel_name, int ticks_per_rev);
 
-    double calcEncAngle();
+    double calcEncRadians();
 };
 
 #endif // DIFFDRIVE_SERIAL_WHEEL_H
