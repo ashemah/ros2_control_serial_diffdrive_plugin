@@ -83,6 +83,9 @@ return_type DiffDriveSerial::start()
 return_type DiffDriveSerial::stop()
 {
   RCLCPP_INFO(logger_, "Stopping Controller...");
+  serial_.deactivateMotors();
+  motorsAreActive_ = false;
+
   status_ = hardware_interface::status::STOPPED;
 
   return return_type::OK;
@@ -130,15 +133,18 @@ hardware_interface::return_type DiffDriveSerial::write()
     return return_type::ERROR;
   }
 
-  RCLCPP_INFO(logger_, "M %f %f", l_wheel_.cmd, r_wheel_.cmd);
+//  RCLCPP_INFO(logger_, "M %f %f", l_wheel_.cmd, r_wheel_.cmd);
 
-  bool isMoving = cmpf(l_wheel_.cmd, 0) || cmpf(r_wheel_.cmd, 0);
+  bool isStopped = cmpf(l_wheel_.cmd, 0) || cmpf(r_wheel_.cmd, 0);
 
   // Calculate if we should deactivate the motors
-  if (isMoving)
+  if (!isStopped)
   {
+    // RCLCPP_INFO(logger_, "IS MOVING");
+
     if (!motorsAreActive_)
     {
+      // RCLCPP_INFO(logger_, "ACTIVATE");
       serial_.activateMotors();
       motorsAreActive_ = true;
     }
@@ -148,12 +154,15 @@ hardware_interface::return_type DiffDriveSerial::write()
   }
   else
   {
+    // RCLCPP_INFO(logger_, "<NOT MOVING>");
+
     auto nowTime = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = nowTime - lastMoveTime_;
     double deltaSeconds = diff.count();
 
     if (deltaSeconds > 5 && motorsAreActive_)
     {
+      // RCLCPP_INFO(logger_, "DISABLING MOTORS");
       serial_.deactivateMotors();
       motorsAreActive_ = false;
     }

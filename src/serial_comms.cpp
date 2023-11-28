@@ -11,6 +11,7 @@ void SerialComms::setup(const std::string &serial_device, int32_t baud_rate, int
     serial::Timeout tt = serial::Timeout::simpleTimeout(timeout_ms);
     serial_conn_.setTimeout(tt); // This should be inline except setTimeout takes a reference and so needs a variable
     serial_conn_.open();
+    sendMsg("z\r", false);
 }
 
 void SerialComms::activateMotors()
