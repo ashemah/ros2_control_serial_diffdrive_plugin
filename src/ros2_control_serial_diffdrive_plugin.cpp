@@ -88,7 +88,7 @@ return_type DiffDriveSerial::stop()
   return return_type::OK;
 }
 
-bool DiffDriveSerial::cmpf(float A, float B, float epsilon = 0.005f)
+bool DiffDriveSerial::cmpf(float A, float B, float epsilon)
 {
   return (fabs(A - B) < epsilon);
 }
