@@ -88,6 +88,11 @@ return_type DiffDriveSerial::stop()
   return return_type::OK;
 }
 
+bool DiffDriveSerial::cmpf(float A, float B, float epsilon = 0.005f)
+{
+  return (fabs(A - B) < epsilon);
+}
+
 hardware_interface::return_type DiffDriveSerial::read()
 {
 
@@ -115,11 +120,6 @@ hardware_interface::return_type DiffDriveSerial::read()
   r_wheel_.vel = (r_wheel_.pos - pos_prev) / deltaSeconds;
 
   return return_type::OK;
-}
-
-bool hardware_interface::cmpf(float A, float B, float epsilon = 0.005f)
-{
-  return (fabs(A - B) < epsilon);
 }
 
 hardware_interface::return_type DiffDriveSerial::write()

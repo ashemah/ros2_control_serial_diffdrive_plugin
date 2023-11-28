@@ -37,6 +37,8 @@ public:
 
   return_type write() override;
 
+  bool cmpf(float A, float B, float epsilon = 0.005f);
+
 private:
   Config cfg_;
   SerialComms serial_;
