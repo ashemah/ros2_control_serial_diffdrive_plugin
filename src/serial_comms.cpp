@@ -15,17 +15,17 @@ void SerialComms::setup(const std::string &serial_device, int32_t baud_rate, int
 
 void SerialComms::activateMotors()
 {
-    std::string response = sendMsg("a\r");
+    std::string response = sendMsg("a\r", false);
 }
 
 void SerialComms::deactivateMotors()
 {
-    std::string response = sendMsg("d\r");
+    std::string response = sendMsg("d\r", false);
 }
 
 void SerialComms::readEncoderValues(int &val_1, int &val_2)
 {
-    std::string response = sendMsg("e\r");
+    std::string response = sendMsg("e\r", true);
 
     std::string delimiter = " ";
     size_t del_pos = response.find(delimiter);
@@ -47,19 +47,23 @@ void SerialComms::setPidValues(float k_p, float k_d, float k_i, float k_o)
 {
     std::stringstream ss;
     ss << "u " << k_p << ":" << k_d << ":" << k_i << ":" << k_o << "\r";
-    sendMsg(ss.str());
+    sendMsg(ss.str(), false);
 }
 
-std::string SerialComms::sendMsg(const std::string &msg_to_send, bool print_output)
+std::string SerialComms::sendMsg(const std::string &msg_to_send, bool wait_for_response)
 {
     serial_conn_.write(msg_to_send);
-    std::string response = serial_conn_.readline();
 
-    if (print_output)
+    if (wait_for_response)
     {
+        std::string response = serial_conn_.readline();
+        return response;
+
         // RCLCPP_INFO_STREAM(logger_,"Sent: " << msg_to_send);
         // RCLCPP_INFO_STREAM(logger_,"Received: " << response);
     }
-
-    return response;
+    else
+    {
+        return "";
+    }
 }
