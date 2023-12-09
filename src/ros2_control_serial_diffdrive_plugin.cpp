@@ -2,21 +2,19 @@
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
-DiffDriveSerial::DiffDriveSerial()
-    : logger_(rclcpp::get_logger("DiffDriveSerial"))
+namespace diffdrive_serial {
+hardware_interface::CallbackReturn DiffDriveSerial::on_init(
+  const hardware_interface::HardwareInfo & info)
 {
-}
-
-return_type DiffDriveSerial::configure(const hardware_interface::HardwareInfo &info)
-{
-  if (configure_default(info) != return_type::OK)
+  if (
+    hardware_interface::SystemInterface::on_init(info) !=
+    hardware_interface::CallbackReturn::SUCCESS)
   {
-    return return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
-  RCLCPP_INFO(logger_, "Configuring...");
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Configuring...");
 
-  time_ = std::chrono::system_clock::now();
   lastMoveTime_ = std::chrono::system_clock::now();
 
   cfg_.left_wheel_name = info_.hardware_parameters["left_wheel_name"];
@@ -31,13 +29,58 @@ return_type DiffDriveSerial::configure(const hardware_interface::HardwareInfo &i
   l_wheel_.setup(cfg_.left_wheel_name, cfg_.enc_counts_per_rev);
   r_wheel_.setup(cfg_.right_wheel_name, cfg_.enc_counts_per_rev);
 
-  // Set up the Arduino
-  serial_.setup(cfg_.device, cfg_.baud_rate, cfg_.timeout);
+for (const hardware_interface::ComponentInfo & joint : info_.joints)
+  {
+    // DiffBotSystem has exactly two states and one command interface on each joint
+    if (joint.command_interfaces.size() != 1)
+    {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("DiffDriveSerial"),
+        "Joint '%s' has %zu command interfaces found. 1 expected.", joint.name.c_str(),
+        joint.command_interfaces.size());
+      return hardware_interface::CallbackReturn::ERROR;
+    }
 
-  RCLCPP_INFO(logger_, "Finished Configuration");
+    if (joint.command_interfaces[0].name != hardware_interface::HW_IF_VELOCITY)
+    {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("DiffDriveSerial"),
+        "Joint '%s' have %s command interfaces found. '%s' expected.", joint.name.c_str(),
+        joint.command_interfaces[0].name.c_str(), hardware_interface::HW_IF_VELOCITY);
+      return hardware_interface::CallbackReturn::ERROR;
+    }
 
-  status_ = hardware_interface::status::CONFIGURED;
-  return return_type::OK;
+    if (joint.state_interfaces.size() != 2)
+    {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("DiffDriveSerial"),
+        "Joint '%s' has %zu state interface. 2 expected.", joint.name.c_str(),
+        joint.state_interfaces.size());
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+
+    if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION)
+    {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("DiffDriveSerial"),
+        "Joint '%s' have '%s' as first state interface. '%s' expected.", joint.name.c_str(),
+        joint.state_interfaces[0].name.c_str(), hardware_interface::HW_IF_POSITION);
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+
+    if (joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY)
+    {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("DiffDriveSerial"),
+        "Joint '%s' have '%s' as second state interface. '%s' expected.", joint.name.c_str(),
+        joint.state_interfaces[1].name.c_str(), hardware_interface::HW_IF_VELOCITY);
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+  }
+
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Finished Configuration");
+
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 std::vector<hardware_interface::StateInterface> DiffDriveSerial::export_state_interfaces()
@@ -46,10 +89,10 @@ std::vector<hardware_interface::StateInterface> DiffDriveSerial::export_state_in
 
   std::vector<hardware_interface::StateInterface> state_interfaces;
 
-  state_interfaces.emplace_back(hardware_interface::StateInterface(l_wheel_.name, hardware_interface::HW_IF_VELOCITY, &l_wheel_.vel));
   state_interfaces.emplace_back(hardware_interface::StateInterface(l_wheel_.name, hardware_interface::HW_IF_POSITION, &l_wheel_.pos));
-  state_interfaces.emplace_back(hardware_interface::StateInterface(r_wheel_.name, hardware_interface::HW_IF_VELOCITY, &r_wheel_.vel));
+  state_interfaces.emplace_back(hardware_interface::StateInterface(l_wheel_.name, hardware_interface::HW_IF_VELOCITY, &l_wheel_.vel));
   state_interfaces.emplace_back(hardware_interface::StateInterface(r_wheel_.name, hardware_interface::HW_IF_POSITION, &r_wheel_.pos));
+  state_interfaces.emplace_back(hardware_interface::StateInterface(r_wheel_.name, hardware_interface::HW_IF_VELOCITY, &r_wheel_.vel));
 
   return state_interfaces;
 }
@@ -66,29 +109,50 @@ std::vector<hardware_interface::CommandInterface> DiffDriveSerial::export_comman
   return command_interfaces;
 }
 
-return_type DiffDriveSerial::start()
+hardware_interface::CallbackReturn DiffDriveSerial::on_configure(
+  const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  RCLCPP_INFO(logger_, "Starting Controller...");
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Re-Configuring...");
+  // Set up the Arduino
+  serial_.setup(cfg_.device, cfg_.baud_rate, cfg_.timeout);
+
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::CallbackReturn DiffDriveSerial::on_cleanup(
+  const rclcpp_lifecycle::State & /*previous_state*/)
+{
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Cleaning up ...please wait...");
+  // if (serial_.connected())
+  // {
+  //   serial_.disconnect();
+  // }
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Successfully cleaned up!");
+
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::CallbackReturn DiffDriveSerial::on_activate(
+  const rclcpp_lifecycle::State & /*previous_state*/)
+{
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Starting Controller...");
 
   serial_.activateMotors();
   motorsAreActive_ = true;
 
   serial_.setPidValues(30, 20, 0, 100);
 
-  status_ = hardware_interface::status::STARTED;
+  return hardware_interface::CallbackReturn::SUCCESS;
+ }
 
-  return return_type::OK;
-}
-
-return_type DiffDriveSerial::stop()
+hardware_interface::CallbackReturn DiffDriveSerial::on_deactivate(
+  const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  RCLCPP_INFO(logger_, "Stopping Controller...");
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Stopping Controller...");
   serial_.deactivateMotors();
   motorsAreActive_ = false;
 
-  status_ = hardware_interface::status::STOPPED;
-
-  return return_type::OK;
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 bool DiffDriveSerial::cmpf(float A, float B, float epsilon)
@@ -96,23 +160,19 @@ bool DiffDriveSerial::cmpf(float A, float B, float epsilon)
   return (fabs(A - B) < epsilon);
 }
 
-hardware_interface::return_type DiffDriveSerial::read()
+hardware_interface::return_type DiffDriveSerial::read(
+  const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
-
   // TODO fix chrono duration
-
-  // Calculate time delta
-  auto new_time = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = new_time - time_;
-  double deltaSeconds = diff.count();
-  time_ = new_time;
 
   if (!serial_.connected())
   {
-    return return_type::ERROR;
+    return hardware_interface::return_type::ERROR;
   }
 
   serial_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
+
+  double deltaSeconds = period.seconds();
 
   double pos_prev = l_wheel_.pos;
   l_wheel_.pos = l_wheel_.calcEncRadians();
@@ -122,29 +182,30 @@ hardware_interface::return_type DiffDriveSerial::read()
   r_wheel_.pos = r_wheel_.calcEncRadians();
   r_wheel_.vel = (r_wheel_.pos - pos_prev) / deltaSeconds;
 
-  return return_type::OK;
+  return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type DiffDriveSerial::write()
+hardware_interface::return_type DiffDriveSerial::write(
+  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
 
   if (!serial_.connected())
   {
-    return return_type::ERROR;
+    return hardware_interface::return_type::ERROR;
   }
 
-//  RCLCPP_INFO(logger_, "M %f %f", l_wheel_.cmd, r_wheel_.cmd);
+//  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "M %f %f", l_wheel_.cmd, r_wheel_.cmd);
 
   bool isStopped = cmpf(l_wheel_.cmd, 0) || cmpf(r_wheel_.cmd, 0);
 
   // Calculate if we should deactivate the motors
   if (!isStopped)
   {
-    // RCLCPP_INFO(logger_, "IS MOVING");
+    // RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "IS MOVING");
 
     if (!motorsAreActive_)
     {
-      // RCLCPP_INFO(logger_, "ACTIVATE");
+      // RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "ACTIVATE");
       serial_.activateMotors();
       motorsAreActive_ = true;
     }
@@ -154,7 +215,7 @@ hardware_interface::return_type DiffDriveSerial::write()
   }
   else
   {
-    // RCLCPP_INFO(logger_, "<NOT MOVING>");
+    // RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "<NOT MOVING>");
 
     auto nowTime = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = nowTime - lastMoveTime_;
@@ -162,7 +223,7 @@ hardware_interface::return_type DiffDriveSerial::write()
 
     if (deltaSeconds > 5 && motorsAreActive_)
     {
-      // RCLCPP_INFO(logger_, "DISABLING MOTORS");
+      // RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "DISABLING MOTORS");
       serial_.deactivateMotors();
       motorsAreActive_ = false;
     }
@@ -172,11 +233,12 @@ hardware_interface::return_type DiffDriveSerial::write()
 
   serial_.setMotorValues(l_wheel_.cmd * l_wheel_.ticks_per_radian, r_wheel_.cmd * r_wheel_.ticks_per_radian);
 
-  return return_type::OK;
+  return hardware_interface::return_type::OK;
 }
+} // namespace diffdrive_serial
 
 #include "pluginlib/class_list_macros.hpp"
 
 PLUGINLIB_EXPORT_CLASS(
-    DiffDriveSerial,
+    diffdrive_serial::DiffDriveSerial,
     hardware_interface::SystemInterface)

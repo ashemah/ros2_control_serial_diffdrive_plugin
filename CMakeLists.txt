@@ -39,49 +39,30 @@ ament_target_dependencies(
   pluginlib
 )
 
-pluginlib_export_plugin_description_file(hardware_interface robot_hardware.xml)
-
-
-
-add_library(fake_robot SHARED src/fake_robot.cpp src/wheel.cpp)
-set_property(TARGET fake_robot PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-target_include_directories(
-  fake_robot
-  PRIVATE
-  include
-)
-ament_target_dependencies(
-  fake_robot
-  hardware_interface
-  controller_manager
-  rclcpp
-  pluginlib
-)
-
-pluginlib_export_plugin_description_file(hardware_interface fake_robot_hardware.xml)
-
-
+pluginlib_export_plugin_description_file(hardware_interface hardware_plugin.xml)
 
 
 install(
-  TARGETS ros2_control_serial_diffdrive_plugin fake_robot
-  DESTINATION lib
+  TARGETS ros2_control_serial_diffdrive_plugin
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
-
-
-
 
 install(
   DIRECTORY controllers launch/
   DESTINATION share/${PROJECT_NAME}
 )
 
-
 ament_export_libraries(
   ros2_control_serial_diffdrive_plugin
-  fake_robot
 )
+
+ament_export_targets(
+  export_${PROJECT_NAME}
+)
+
 ament_export_dependencies(
   hardware_interface
   controller_manager

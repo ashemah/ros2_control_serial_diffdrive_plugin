@@ -1,6 +1,6 @@
 <library path="ros2_control_serial_diffdrive_plugin">
-  <class name="ros2_control_serial_diffdrive_plugin/DiffDriveSerial"
-         type="DiffDriveSerial"
+  <class name="diffdrive_serial/DiffDriveSerial"
+         type="diffdrive_serial::DiffDriveSerial"
          base_class_type="hardware_interface::SystemInterface">
     <description>
       Hardware Interface for Differential Drive Serial controller.
