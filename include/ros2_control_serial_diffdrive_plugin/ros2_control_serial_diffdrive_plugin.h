@@ -24,6 +24,8 @@ class DiffDriveSerial : public hardware_interface::SystemInterface
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(DiffDriveSerial);
 
+  void throttledLogState();
+
   DIFFDRIVE_SERIAL_PUBLIC
   hardware_interface::CallbackReturn on_init(
     const hardware_interface::HardwareInfo & info) override;
@@ -69,6 +71,7 @@ private:
   Wheel r_wheel_;
 
   std::chrono::time_point<std::chrono::system_clock> lastMoveTime_;
+  std::chrono::time_point<std::chrono::system_clock> lastLogTime_;
   bool motorsAreActive_ = false;
 };
 }

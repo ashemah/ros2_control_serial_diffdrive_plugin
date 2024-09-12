@@ -7,19 +7,17 @@ class Wheel
 {
 public:
     std::string name = "";
-    int enc = 0;
-    double cmd = 0;
-    double pos = 0;
-    double vel = 0;
-    double eff = 0;
-    double velSetPt = 0;
-    double ticks_per_radian = 0;
+    double cmdTicksPerSecond = 0;
+    long int encoderPos = 0;
+    double rotRadians = 0;
+    double velRadiansPerSecond = 0;
+    double ticksPerRadian = 0;
 
     Wheel() = default;
 
-    Wheel(const std::string &wheel_name, int ticks_per_rev);
+    Wheel(const std::string &wheelName, int ticksPerRevolution);
 
-    void setup(const std::string &wheel_name, int ticks_per_rev);
+    void setup(const std::string &wheelName, int ticksPerRevolution);
 
     double calcEncRadians();
 };

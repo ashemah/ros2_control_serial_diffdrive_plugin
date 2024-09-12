@@ -2,18 +2,18 @@
 
 #include <cmath>
 
-Wheel::Wheel(const std::string &wheel_name, int ticks_per_rev)
+Wheel::Wheel(const std::string &wheelName, int ticksPerRevolution)
 {
-  setup(wheel_name, ticks_per_rev);
+  setup(wheelName, ticksPerRevolution);
 }
 
-void Wheel::setup(const std::string &wheel_name, int ticks_per_rev)
+void Wheel::setup(const std::string &wheelName, int ticksPerRevolution)
 {
-  name = wheel_name;
-  ticks_per_radian = ticks_per_rev / (2 * M_PI);
+  name = wheelName;
+  ticksPerRadian = ticksPerRevolution / (2 * M_PI);
 }
 
 double Wheel::calcEncRadians()
 {
-  return enc / ticks_per_radian;
+  return encoderPos / ticksPerRadian;
 }

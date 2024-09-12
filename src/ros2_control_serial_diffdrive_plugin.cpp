@@ -2,6 +2,8 @@
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
+// #define ENABLE_LOGGING
+
 namespace diffdrive_serial
 {
   hardware_interface::CallbackReturn DiffDriveSerial::on_init(
@@ -17,6 +19,7 @@ namespace diffdrive_serial
     RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "Configuring...");
 
     lastMoveTime_ = std::chrono::system_clock::now();
+    lastLogTime_ = std::chrono::system_clock::now();
 
     cfg_.left_wheel_name = info_.hardware_parameters["left_wheel_name"];
     cfg_.right_wheel_name = info_.hardware_parameters["right_wheel_name"];
@@ -90,10 +93,10 @@ namespace diffdrive_serial
 
     std::vector<hardware_interface::StateInterface> state_interfaces;
 
-    state_interfaces.emplace_back(hardware_interface::StateInterface(l_wheel_.name, hardware_interface::HW_IF_POSITION, &l_wheel_.pos));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(l_wheel_.name, hardware_interface::HW_IF_VELOCITY, &l_wheel_.vel));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(r_wheel_.name, hardware_interface::HW_IF_POSITION, &r_wheel_.pos));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(r_wheel_.name, hardware_interface::HW_IF_VELOCITY, &r_wheel_.vel));
+    state_interfaces.emplace_back(hardware_interface::StateInterface(l_wheel_.name, hardware_interface::HW_IF_POSITION, &l_wheel_.rotRadians));
+    state_interfaces.emplace_back(hardware_interface::StateInterface(l_wheel_.name, hardware_interface::HW_IF_VELOCITY, &l_wheel_.velRadiansPerSecond));
+    state_interfaces.emplace_back(hardware_interface::StateInterface(r_wheel_.name, hardware_interface::HW_IF_POSITION, &r_wheel_.rotRadians));
+    state_interfaces.emplace_back(hardware_interface::StateInterface(r_wheel_.name, hardware_interface::HW_IF_VELOCITY, &r_wheel_.velRadiansPerSecond));
 
     return state_interfaces;
   }
@@ -104,8 +107,8 @@ namespace diffdrive_serial
 
     std::vector<hardware_interface::CommandInterface> command_interfaces;
 
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(l_wheel_.name, hardware_interface::HW_IF_VELOCITY, &l_wheel_.cmd));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(r_wheel_.name, hardware_interface::HW_IF_VELOCITY, &r_wheel_.cmd));
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(l_wheel_.name, hardware_interface::HW_IF_VELOCITY, &l_wheel_.cmdTicksPerSecond));
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(r_wheel_.name, hardware_interface::HW_IF_VELOCITY, &r_wheel_.cmdTicksPerSecond));
 
     return command_interfaces;
   }
@@ -161,6 +164,21 @@ namespace diffdrive_serial
     return (fabs(A - B) < epsilon);
   }
 
+  void DiffDriveSerial::throttledLogState() {
+
+  #ifdef ENABLE_LOGGING
+      auto nowTime = std::chrono::system_clock::now();
+
+      std::chrono::duration<double> diff = (nowTime - lastLogTime_);
+
+      if (diff.count() > 1) {
+        RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "LEFT C %f E %ld P %f V %f, RIGHT C %f E %ld P %f V %f", l_wheel_.cmdTicksPerSecond, l_wheel_.encoderPos, l_wheel_.rotRadians, l_wheel_.velRadiansPerSecond, r_wheel_.cmdTicksPerSecond, r_wheel_.encoderPos, r_wheel_.rotRadians, r_wheel_.velRadiansPerSecond);
+        lastLogTime_ = nowTime;
+      }
+#endif
+
+  }
+
   hardware_interface::return_type DiffDriveSerial::read(
       const rclcpp::Time & /*time*/, const rclcpp::Duration &period)
   {
@@ -171,20 +189,26 @@ namespace diffdrive_serial
       return hardware_interface::return_type::ERROR;
     }
 
-    serial_.readEncoderValues(l_wheel_.enc, r_wheel_.enc);
+    if (motorsAreActive_) {
+      serial_.readEncoderValues(l_wheel_.encoderPos, r_wheel_.encoderPos);
 
-    double deltaSeconds = period.seconds();
+      double deltaSeconds = period.seconds();
 
-    double pos_prev = l_wheel_.pos;
-    l_wheel_.pos = l_wheel_.calcEncRadians();
-    l_wheel_.vel = (l_wheel_.pos - pos_prev) / deltaSeconds;
+      double pos_prev = l_wheel_.rotRadians;
+      l_wheel_.rotRadians = l_wheel_.calcEncRadians();
+      l_wheel_.velRadiansPerSecond = (l_wheel_.rotRadians - pos_prev) / deltaSeconds;
 
-    pos_prev = r_wheel_.pos;
-    r_wheel_.pos = r_wheel_.calcEncRadians();
-    r_wheel_.vel = (r_wheel_.pos - pos_prev) / deltaSeconds;
+      pos_prev = r_wheel_.rotRadians;
+      r_wheel_.rotRadians = r_wheel_.calcEncRadians();
+      r_wheel_.velRadiansPerSecond = (r_wheel_.rotRadians - pos_prev) / deltaSeconds;
+    }
+    else {
+      l_wheel_.velRadiansPerSecond = 0;
+      r_wheel_.velRadiansPerSecond = 0;
+    }
 
-    RCLCPP_INFO(logger_, "WL %f %f, WR %f %f", l_wheel_.pos, l_wheel_.vel, r_wheel_.pos, r_wheel_.vel);
-
+    throttledLogState();
+    
     return hardware_interface::return_type::OK;
   }
 
@@ -197,9 +221,7 @@ namespace diffdrive_serial
       return hardware_interface::return_type::ERROR;
     }
 
-    //  RCLCPP_INFO(rclcpp::get_logger("DiffDriveSerial"), "M %f %f", l_wheel_.cmd, r_wheel_.cmd);
-
-    bool isStopped = cmpf(l_wheel_.cmd, 0) || cmpf(r_wheel_.cmd, 0);
+    bool isStopped = cmpf(l_wheel_.cmdTicksPerSecond, 0) || cmpf(r_wheel_.cmdTicksPerSecond, 0);
 
     // Calculate if we should deactivate the motors
     if (!isStopped)
@@ -230,11 +252,11 @@ namespace diffdrive_serial
         serial_.deactivateMotors();
         motorsAreActive_ = false;
       }
-
-      lastMoveTime_ = nowTime;
     }
 
-    serial_.setMotorValues(l_wheel_.cmd * l_wheel_.ticks_per_radian, r_wheel_.cmd * r_wheel_.ticks_per_radian);
+    serial_.setMotorValues(l_wheel_.cmdTicksPerSecond * l_wheel_.ticksPerRadian, r_wheel_.cmdTicksPerSecond * r_wheel_.ticksPerRadian);
+
+    throttledLogState();
 
     return hardware_interface::return_type::OK;
   }
