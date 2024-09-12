@@ -183,8 +183,7 @@ namespace diffdrive_serial
       const rclcpp::Time & /*time*/, const rclcpp::Duration &period)
   {
     // TODO fix chrono duration
-
-    if (!serial_.connected())
+    if (!serial_.connected() || !motorsAreActive_)
     {
       return hardware_interface::return_type::ERROR;
     }
